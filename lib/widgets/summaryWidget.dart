@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
 class SummaryWidget extends StatelessWidget {
-  final String icon, temp, desc, date, location;
-  final Function handleSearchButoton, handleLocationButton;
+  final Map weatherData;
+  final Function handleSearchButton, handleLocationButton;
   const SummaryWidget(
       {Key? key,
-      required this.icon,
-      required this.temp,
-      required this.desc,
-      required this.date,
-      required this.location,
-      required this.handleSearchButoton,
+      required this.weatherData,
+      required this.handleSearchButton,
       required this.handleLocationButton})
       : super(key: key);
 
@@ -28,7 +24,7 @@ class SummaryWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 ElevatedButton(
-                  onPressed: () => handleSearchButoton(),
+                  onPressed: () => handleSearchButton(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3C47E9),
                     foregroundColor: const Color(0xFFE7E7EB),
@@ -47,12 +43,12 @@ class SummaryWidget extends StatelessWidget {
             ),
             const SizedBox(height: 24.0),
             Image.network(
-              'http://openweathermap.org/img/wn/$icon@2x.png',
+              'http://openweathermap.org/img/wn/${weatherData['icon']}@2x.png',
               scale: 0.75,
             ),
             const SizedBox(height: 24.0),
             Text(
-              '$temp ℃℉',
+              '${weatherData['temperature']} ℃℉',
               style: const TextStyle(
                 color: Color(0xFFE7E7EB),
                 fontSize: 48.0,
@@ -60,7 +56,7 @@ class SummaryWidget extends StatelessWidget {
             ),
             const SizedBox(height: 18.0),
             Text(
-              desc,
+              weatherData['description'],
               style: const TextStyle(
                 color: Color(0xFFA09FB1),
                 fontSize: 36.0,
@@ -78,7 +74,7 @@ class SummaryWidget extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  date,
+                  weatherData['date'],
                   style: const TextStyle(
                     color: Color(0xFFA09FB1),
                     fontSize: 18.0,
@@ -98,7 +94,7 @@ class SummaryWidget extends StatelessWidget {
                 Container(
                   margin: const EdgeInsets.only(left: 10.0),
                   child: Text(
-                    location,
+                    weatherData['location'],
                     style: const TextStyle(
                       color: Color(0xFFA09FB1),
                       fontSize: 18.0,

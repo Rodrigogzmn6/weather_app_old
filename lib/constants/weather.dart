@@ -1,15 +1,7 @@
 const weather = {
-  "coord": {
-    "lon": 10.99,
-    "lat": 44.34
-  },
+  "coord": {"lon": 10.99, "lat": 44.34},
   "weather": [
-    {
-      "id": 800,
-      "main": "Clear",
-      "description": "clear sky",
-      "icon": "01d"
-    }
+    {"id": 800, "main": "Clear", "description": "clear sky", "icon": "01d"}
   ],
   "base": "stations",
   "main": {
@@ -23,14 +15,8 @@ const weather = {
     "grnd_level": 943
   },
   "visibility": 10000,
-  "wind": {
-    "speed": 0.57,
-    "deg": 7,
-    "gust": 0.66
-  },
-  "clouds": {
-    "all": 0
-  },
+  "wind": {"speed": 0.57, "deg": 45, "gust": 0.66},
+  "clouds": {"all": 0},
   "dt": 1676389841,
   "sys": {
     "type": 1,

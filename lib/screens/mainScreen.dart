@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:weather_app/widgets/detailsWidget.dart';
+import 'package:weather_app/widgets/highlightsWidget.dart';
+import 'package:weather_app/widgets/searchWidget.dart';
+import 'package:weather_app/widgets/unitsWidget.dart';
 
-import '../constants/days.dart';
-import '../constants/forecast.dart';
-import '../constants/months.dart';
-import '../constants/weather.dart';
-import '../widgets/detailsWidget.dart';
+import '../services/formatData.dart';
+import '../services/getLocation.dart';
+import '../services/getWeather.dart';
 import '../widgets/summaryWidget.dart';
 
 class MainScreen extends StatefulWidget {
@@ -16,77 +19,156 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   bool _searching = false;
+  TextEditingController searchController = TextEditingController();
+  Map weatherData = {};
+  Map forecastData = {};
+  String units = 'metric';
+
+  @override
+  void initState() {
+    getLocalWeather();
+    getLocalForecast();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void getLocalWeather() async {
+    Position location = await getLocation();
+    Map data = await fetchLocalWeather(
+        location.latitude.toString(), location.longitude.toString(), units);
+    setState(() {
+      weatherData = data;
+    });
+  }
+
+  void getLocalForecast() async {
+    Position location = await getLocation();
+    Map data = await fetchLocalForecast(
+        location.latitude.toString(), location.longitude.toString(), units);
+    setState(() {
+      forecastData = data;
+    });
+  }
+
+  void getSearchWeather(city) async {
+    Map data = await fetchCityWeather(city, units);
+    setState(() {
+      weatherData = data;
+    });
+  }
+
+  void getSearchForecast(city) async {
+    Map data = await fetchCityForecast(city, units);
+    setState(() {
+      forecastData = data;
+    });
+  }
+
+  void handleCloseButton() {
+    setState(() {
+      _searching = false;
+    });
+  }
 
   void handleSearchButton() {
-    // setState(() {
-    //   _searching = true;
-    // });
-    print('Searching button clicked');
+    setState(() {
+      _searching = true;
+    });
   }
 
   void handleLocationButton() {
-    var date = DateTime.now();
-    print('Location button clicked');
-    print(date);
-  }
-
-  Map formattedSummaryWeatherData(weatherData) {
-    return {
-      'icon': weatherData['weather'][0]['icon'],
-      'temperature': weatherData['main']['temp'].round().toString(),
-      'description': weatherData['weather'][0]['main'],
-      'date': formattedDate(DateTime.now()),
-      'location': weatherData['name'],
-    };
-  }
-
-  List<Map> formattedForecastWeatherData(forecastData) {
-    List<Map> days = [];
-    forecastData['list'].forEach((Map day) {
-      if (DateTime.parse(day['dt_txt']).hour == 0) {
-        Map dayData = {
-          'date': formattedDate(DateTime.parse(day['dt_txt'])),
-          'icon': day['weather'][0]['icon'],
-          'maxTemp': day['main']['temp_max'].round().toString(),
-          'minTemp': day['main']['temp_min'].round().toString(),
-        };
-        days.add(dayData);
-      }
+    setState(() {
+      weatherData = {};
+      forecastData = {};
     });
-    return days;
+    getLocalWeather();
+    getLocalForecast();
   }
 
-  String formattedDate(date) {
-    String weekday = days[date.weekday - 1].substring(0, 3),
-        day = date.day.toString(),
-        month = months[date.month - 1].substring(0, 3);
-    return '$weekday $day $month';
+  void handleSearchCityButton(city) {
+    setState(() {
+      weatherData = {};
+      forecastData = {};
+    });
+    handleCloseButton();
+    searchController.clear();
+    getSearchWeather(city);
+    getSearchForecast(city);
+  }
+
+  void handleUnitChange(unit) async {
+    List coords = [weatherData['coord']['lat'], weatherData['coord']['lon']];
+    if (weatherData.isNotEmpty && forecastData.isNotEmpty) {
+      setState(() {
+        weatherData = {};
+        forecastData = {};
+        units = unit;
+      });
+      Map weather = await fetchLocalWeather(
+          coords[0].toString(), coords[1].toString(), units);
+      Map forecast = await fetchLocalForecast(
+          coords[0].toString(), coords[1].toString(), units);
+      setState(() {
+        weatherData = weather;
+        forecastData = forecast;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    Map? weatherData = weather;
-    Map? forecastData = forecast;
-
     return SafeArea(
       child: Scaffold(
+        backgroundColor: const Color(0xFF100E1D),
         body: ListView(children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _searching
-                  ? const Placeholder(
-                      child: Text('Searching'),
+                  ? SearchWidget(
+                      handleClose: handleCloseButton,
+                      handleSearch: handleSearchCityButton,
+                      searchController: searchController,
                     )
-                  : SummaryWidget(
-                      weatherData: formattedSummaryWeatherData(weatherData),
-                      handleSearchButton: handleSearchButton,
-                      handleLocationButton: handleLocationButton,
+                  : Column(
+                      children: [
+                        SummaryWidget(
+                          weatherData: weatherData.isNotEmpty
+                              ? formattedSummaryWeatherData(weatherData)
+                              : weatherData,
+                          handleSearchButton: handleSearchButton,
+                          handleLocationButton: handleLocationButton,
+                          units: units,
+                        ),
+                        Container(
+                          color: const Color(0xFF100E1D),
+                          child: Column(
+                            children: [
+                              UnitsWidget(
+                                unit: units,
+                                handleUnit: handleUnitChange,
+                              ),
+                              DetailsWidget(
+                                forecastData: forecastData.isNotEmpty
+                                    ? formattedForecastWeatherData(forecastData)
+                                    : [],
+                                units: units,
+                              ),
+                              HighlightsWidget(
+                                highlightsData: weatherData.isNotEmpty
+                                    ? formattedHighlightsData(weatherData)
+                                    : weatherData,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-              DetailsWidget(
-                forecastData: formattedForecastWeatherData(forecastData),
-              )
             ],
           ),
         ]),
@@ -94,4 +176,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-// weather['weather']['icon']

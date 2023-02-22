@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import './constants/appTheme.dart';
 import 'screens/mainScreen.dart';
 
 void main() {
@@ -13,9 +14,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // double screenWidth = MediaQuery.of(context).size.width;
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Weather App',
-      home: MainScreen(),
+      theme: appTheme(),
+      home: const MainScreen(),
     );
   }
 }
